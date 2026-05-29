@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT Ujian - Pendidikan Pancasila Kelas 8</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Anti-cheat: Mencegah seleksi teks (copy-paste) */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 min-h-screen text-slate-800 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ==========================================
+        // KONFIGURASI UTAMA
+        // ==========================================
+        const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxPcVx9bdLN3HIQ13-gn_eoUTFWs8_1uqk0lp4aT6Umh_lRjpQFfCIp4uMs3rXIis2VhQ/exec"; 
+        const STORAGE_KEY = "cbt_PENDIDIKAN_PANCASILA_VIII";
+        const EXAM_DURATION_MINUTES = 90;
+        const EXAM_SUBJECT = "PENDIDIKAN PANCASILA";
+        const EXAM_TYPE = "SUMATIF AKHIR JENJANG";
+        const EXAM_CLASS = "VIII";
+
+        // ==========================================
+        // DATA SOAL (Diambil dari PDF)
+        // ==========================================
+        const RAW_QUESTIONS = [
+            { id: 1, text: "Ide atau gagasan yang bersifat arif atau bijaksana yang memiliki nilai-nilai baik dan dipercaya oleh masyarakat lokal sehingga ide atau gagasan tersebut diterapkan dalam kehidupan masyarakat lokal merupakan pengertian dari...", options: [ { id: 'a', text: "Tradisi", isCorrect: false }, { id: 'b', text: "Kearifan lokal", isCorrect: true }, { id: 'c', text: "Budaya", isCorrect: false }, { id: 'd', text: "Upacara adat", isCorrect: false } ]},
+            { id: 2, text: "Berikut ini yang bukan merupakan ciri-ciri kebudayaan nasional adalah...", options: [ { id: 'a', text: "Tergantung pada kondisi geografis", isCorrect: true }, { id: 'b', text: "Terdapat unsur-unsur budaya daerah yang bersifat nasional", isCorrect: false }, { id: 'c', text: "Mencerminkan nilai-nilai luhur dan kepribadian bangsa", isCorrect: false }, { id: 'd', text: "Mengandung unsur-unsur pemersatu bangsa", isCorrect: false } ]},
+            { id: 3, text: "Sesuatu yang sudah dilaksanakan secara turun temurun oleh masyarakat dalam jangka waktu yang lama dan telah menjadi kebiasaan disebut dengan...", options: [ { id: 'a', text: "Budaya", isCorrect: false }, { id: 'b', text: "Kearifan lokal", isCorrect: false }, { id: 'c', text: "Tradisi", isCorrect: true }, { id: 'd', text: "Kebiasaan", isCorrect: false } ]},
+            { id: 4, text: "Penyelenggaraan pentas seni dan budaya dalam merayakan hari jadi sebuah kota merupakan contoh pelestarian budaya di lingkungan...", options: [ { id: 'a', text: "Masyarakat", isCorrect: true }, { id: 'b', text: "Keluarga", isCorrect: false }, { id: 'c', text: "Sekolah", isCorrect: false }, { id: 'd', text: "Negara", isCorrect: false } ]},
+            { id: 5, text: "Pelestarian kebudayaan Indonesia merupakan suatu keharusan bagi bangsa Indonesia melalui berbagai cara dan upaya. Namun, hal yang utama and penting bagi pelestarian kebudayaan adalah...", options: [ { id: 'a', text: "Menguasai bahasa daerah sebelum mementaskan sebuah pertunjukkan", isCorrect: false }, { id: 'b', text: "Menanamkan semangat untuk mengadakan festival kebudayaan", isCorrect: false }, { id: 'c', text: "Mempersiapkan dana yang cukup untuk melestarikan budaya", isCorrect: false }, { id: 'd', text: "Memiliki kesadaran dan rasa cinta terhadap kebudayaan", isCorrect: true } ]},
+            { id: 6, text: "Mengapa budaya sering disebut sebagai jati diri sebuah bangsa...", options: [ { id: 'a', text: "Karena budaya hanya berkaitan dengan peninggalan benda-benda kuno", isCorrect: false }, { id: 'b', text: "Karena budaya adalah sesuatu yang tidak bisa berubah selamanya", isCorrect: false }, { id: 'c', text: "Karena budaya dibuat untuk menarik wisatawan asing saja", isCorrect: false }, { id: 'd', text: "Karena budaya merupakan ciri khas yang membedakan satu bangsa dengan bangsa yang lainnya", isCorrect: true } ]},
+            { id: 7, text: "Kebudayaan nasional sebenarnya merupakan hasil dari berbagai unsur budaya lokal yang ada dalam masyarakat. Meskipun begitu, tidak semua budaya lokal secara otomatis dianggap sebagai bagian dari budaya nasional. Syarat budaya lokal dapat menjadi budaya nasional apabila...", options: [ { id: 'a', text: "Kebudayaan daerah memiliki nilai ekonomi yang tinggi.", isCorrect: false }, { id: 'b', text: "Kebudayaan daerah memiliki pengaruh global yang signifikan.", isCorrect: false }, { id: 'c', text: "Kebudayaan daerah diterima oleh seluruh masyarakat Indonesia.", isCorrect: true }, { id: 'd', text: "Kebudayaan daerah dapat mempertahankan isolasi total dari pengaruh luar.", isCorrect: false } ]},
+            { id: 8, text: "Setiap tradisi dan budaya yang ada di Indonesia hendaknya dijaga dan dilestarikan. Hal tersebut berkaitan dengan kedudukan kebudayaan sebagai...", options: [ { id: 'a', text: "Aset berharga yang hanya perlu dilestarikan oleh pemerintah.", isCorrect: false }, { id: 'b', text: "Bagian penting dari identitas suatu kelompok masyarakat.", isCorrect: true }, { id: 'c', text: "Aset yang relevan bagi generasi saat ini.", isCorrect: false }, { id: 'd', text: "Aset yang tidak memiliki dampak positif bagi masyarakat.", isCorrect: false } ]},
+            { id: 9, text: "Indonesia memiliki warisan budaya yang dikelompokkan menjadi dua kategori, yaitu warisan budaya benda dan warisan budaya tak benda. Contoh warisan budaya tak benda yang diakui UNESCO adalah...", options: [ { id: 'a', text: "Candi borobudur", isCorrect: false }, { id: 'b', text: "Pencak silat", isCorrect: true }, { id: 'c', text: "Candi prambanan", isCorrect: false }, { id: 'd', text: "Taman nasional Komodo", isCorrect: false } ]},
+            { id: 10, text: "Cara pandang Bangsa Indonesia tentang diri dan lingkungannya yang didasarkan pada pancasila dan UUD NRI Tahun 1945 serta sesuai dengan letak geografis Wilayah Nusantara yang menjiwai kehidupan Bangsa dalam mencapai tujuan atau cita-cita nasional disebut dengan...", options: [ { id: 'a', text: "Jati diri Bangsa", isCorrect: false }, { id: 'b', text: "Identitas Nasional", isCorrect: false }, { id: 'c', text: "Wawasan Nusantara", isCorrect: true }, { id: 'd', text: "Norma hukum", isCorrect: false } ]},
+            { id: 11, text: "Kata wawasan Nusantara berasal dari kata wawasan dan nusantara. Wawasan nusantara memiliki tujuan mewujudkan...", options: [ { id: 'a', text: "Nasionalisme yang tinggi", isCorrect: true }, { id: 'b', text: "Kepedulian sosial", isCorrect: false }, { id: 'c', text: "Demokrasi", isCorrect: false }, { id: 'd', text: "Toleransi", isCorrect: false } ]},
+            { id: 12, text: "Wawasan Nusantara bermula dari wawasan kewilayahan. Sebagai konsepsi kewilayahan, Bangsa Indonesia mengusahakan dan memandang wilayah sebagai satu kesatuan. Konsep wawasan kewilayahan ini tidak dapat dipisahkan dari konsep negara kepulauan yang diperjuangkan melalui...", options: [ { id: 'a', text: "Deklarasi Djuanda 1957", isCorrect: true }, { id: 'b', text: "Manifesto politik 1925", isCorrect: false }, { id: 'c', text: "Sumpah pemuda 1928", isCorrect: false }, { id: 'd', text: "Dekret Presiden 1959", isCorrect: false } ]},
+            { id: 13, text: "Perhatikan pernyataan-pernyataan berikut.\n(1) Bertujuan meningkatkan rasa nasionalisme.\n(2) Menghilangkan kepentingan-kepentingan individu.\n(3) Memiliki relevansi dengan masa depan bangsa Indonesia.\n(4) Berfokus pada daerah masing-masing dan mengabaikan kepentingan nasional.\n(5) Pedoman, acuan, dan arahan untuk membangun dan memelihara keutuhan NKRI.\nPernyataan yang tepat mengenai wawasan Nusantara ditunjukkan oleh nomor....", options: [ { id: 'a', text: "(1), (2), dan (3)", isCorrect: false }, { id: 'b', text: "(1), (3), dan (5)", isCorrect: true }, { id: 'c', text: "(2), (3), dan (4)", isCorrect: false }, { id: 'd', text: "(3), (4), dan (5)", isCorrect: false } ]},
+            { id: 14, text: "Berikut yang tidak termasuk fungsi wawasan Nusantara adalah....", options: [ { id: 'a', text: "Menumbuhkan dan mengembangkan kesadaran dan semangat kebangsaan Indonesia.", isCorrect: false }, { id: 'b', text: "Menanamkan dan menumbuhkan rasa cinta tanah air dan rela berkorban untuk negara.", isCorrect: false }, { id: 'c', text: "Membatasi kehidupan bersama yang multikultural dan plural berdasarkan nilai tertentu.", isCorrect: true }, { id: 'd', text: "Mengembangkan keberadaan masyarakat madani sebagai pengembangan kekuasaan pemerintah", isCorrect: false } ]},
+            { id: 15, text: "Wawasan Nusantara dalam kehidupan politik akan membangun iklim penyelenggaraan negara yang..", options: [ { id: 'a', text: "diktatoris", isCorrect: false }, { id: 'b', text: "sehat dan dinamis", isCorrect: true }, { id: 'c', text: "melahirkan politik dinasti", isCorrect: false }, { id: 'd', text: "menimbulkan kesenjangan", isCorrect: false } ]},
+            { id: 16, text: "Menerapkan nilai-nilai wawasan Nusantara dalam kehidupan sehari-hari sangat penting dilakukan oleh generasi muda. Berikut pernyataan yang menunjukkan pentingnya wawasan Nusantara bagi generasi muda adalah", options: [ { id: 'a', text: "Meningkatkan rasa solidaritas dan persatuan antarsuku bangsa di Indonesia sehingga dapat menjaga keutuhan Negara Indonesia.", isCorrect: true }, { id: 'b', text: "Memberikan petunjuk untuk mengolah dan memanfaatkan kekayaan alam Negara Indonesia demi keuntungan pribadi.", isCorrect: false }, { id: 'c', text: "Melatih kemampuan berpikir kritis sehingga dapat mengkritisi kebijakan yang tidak memihak kepada rakyat.", isCorrect: false }, { id: 'd', text: "Menanamkan nilai-nilai kerohanian sehingga dapat mensyukuri segala nikmat yang diberikan oleh Tuhan Yang Maha Esa.", isCorrect: false } ]},
+            { id: 17, text: "Perhatikan pernyataan-pernyataan berikut.\n(1) Menggunakan produk lokal untuk mendukung perekonomian daerah.\n(2) Menghargai perbedaan budaya dan adat istiadat yang ada di Indonesia.\n(3) Menggunakan media sosial untuk menyebarkan berita yang diragukan kredibilitasnya.\n(4) Memanfaatkan keindahan alam Indonesia untuk dijadikan tempat wisata bersama masyarakat setempat.\n(5) Memilih pergi berlibur ke luar negeri karena banyak tempat wisata di luar negeri yang tidak ditemukan di Indonesia.\nPernyataan yang menunjukkan penerapan wawasan Nusantara yang dilakukan oleh masyarakat Indonesia ditunjukkan oleh nomor....", options: [ { id: 'a', text: "(1), (2), dan (4)", isCorrect: true }, { id: 'b', text: "(1), (3), dan (4)", isCorrect: false }, { id: 'c', text: "(1), (4), dan (5)", isCorrect: false }, { id: 'd', text: "(2), (3), dan (5)", isCorrect: false } ]},
+            { id: 18, text: "Perhatikan ilustrasi berikut.\nDi sudut Kota B, terdapat suatu kawasan yang memiliki pemandangan alam yang sangat indah. Oleh sebab itu, kepala daerah Kota B ingin memanfaatkan kawasan tersebut menjadi kawasan pariwisata. Berdasarkan konsep wawasan Nusantara, langkah tepat yang harus dilakukan oleh kepala daerah Kota B adalah.", options: [ { id: 'a', text: "mengembangkan kawasan wisata dengan melibatkan masyarakat lokal", isCorrect: true }, { id: 'b', text: "melakukan pengembangan kawasan wisata dengan mengikuti tren terkini", isCorrect: false }, { id: 'c', text: "mengundang investor asing untuk membangun fasilitas mewah yang dapat menarik para wisatawan asing", isCorrect: false }, { id: 'd', text: "menetapkan harga tiket masuk yang tinggi untuk wisatawan lokal supaya dapat meningkatkan pendapatan daerah", isCorrect: false } ]},
+            { id: 19, text: "Konsep wawasan Nusantara dapat diimplementasikan dalam kehidupan pertahanan dan keamanan negara. Berikut pernyataan yang menunjukkan implementasi konsep wawasan Nusantara dalam strategi pertahanan dan keamanan negara untuk menghadapi ancaman global adalah..", options: [ { id: 'a', text: "menempatkan pasukan militer di setiap daerah untuk mengantisipasi serangan dari luar", isCorrect: false }, { id: 'b', text: "meningkatkan anggaran militer untuk membeli peralatan perang paling modern dari negara lain", isCorrect: false }, { id: 'c', text: "menutup diri dari pengaruh budaya asing dengan membatasi arus globalisasi yang dapat menghilangkan rasa nasionalisme bangsa Indonesia", isCorrect: false }, { id: 'd', text: "memperkuat kerja sama regional dan internasional serta menjaga kedaulatan negara melalui hubungan diplomasi dan pertahanan yang terintegrasi", isCorrect: true } ]},
+            { id: 20, text: "Menumbuhkan semangat wawasan Nusantara dapat dilakukan melalui kegiatan-kegiatan di sekolah. Berikut kegiatan yang dapat menumbuhkan semangat wawasan Nusantara di lingkungan sekolah adalah..", options: [ { id: 'a', text: "mengadakan pentas seni yang menampilkan seni dan tradisi dari berbagai daerah di Indonesia", isCorrect: true }, { id: 'b', text: "melakukan kunjungan wisata ke taman rekreasi yang menyediakan wahana ekstrem untuk menghilangkan stres", isCorrect: false }, { id: 'c', text: "menggelar festival budaya Asia yang menampilkan kultur budaya Asia yang sedang digemari oleh generasi muda", isCorrect: false }, { id: 'd', text: "berpartisipasi dalam kegiatan Pekan Olahraga Nasional (PON) dengan menjadi peserta lomba yang mewakili provinsi", isCorrect: false } ]},
+            { id: 21, text: "Berikut pernyataan yang dapat menjelaskan hubungan yang erat antara masyarakat dan kebudayaan adalah", options: [ { id: 'a', text: "Masyarakat dapat berkembang tanpa adanya suatu kebudayaan.", isCorrect: false }, { id: 'b', text: "Kebudayaan tercipta karena keberadaan manusia yang hidup dalam masyarakat.", isCorrect: true }, { id: 'c', text: "Perubahan kebudayaan tidak memengaruhi dinamika kehidupan masyarakat.", isCorrect: false }, { id: 'd', text: "Keharmonisan masyarakat ditentukan oleh adanya inovasi terhadap kebudayaan.", isCorrect: false } ]},
+            { id: 22, text: "Kebudayaan yang berlaku dan diterapkan dalam kehidupan sosial masyarakat setempat merupakan kebudayaan....", options: [ { id: 'a', text: "etnik", isCorrect: false }, { id: 'b', text: "lokal", isCorrect: true }, { id: 'c', text: "suku bangsa", isCorrect: false }, { id: 'd', text: "nasional Indonesia", isCorrect: false } ]},
+            { id: 23, text: "Perhatikan pernyataan-pernyataan berikut.\n(1) Suatu paham yang mengandung nilai-nilai baik yang diterapkan oleh masyarakat global.\n(2) Mencerminkan cara pandang dan hidup masyarakat yang menganut suatu kebudayaan.\n(3) Berfungsi menyaring kebudayaan asing yang dapat merusak kebudayaan lokal.\n(4) Berkaitan secara spesifik dengan seluruh kebudayaan yang ada di suatu negara.\n(5) Sistem pengetahuan masyarakat setempat yang bersifat empiris dan pragmatis.\nPernyataan yang tepat mengenai kearifan lokal ditunjukkan oleh nomor....", options: [ { id: 'a', text: "(1), (2), dan (3)", isCorrect: false }, { id: 'b', text: "(1), (2), dan (4)", isCorrect: false }, { id: 'c', text: "(2), (3), dan (5)", isCorrect: true }, { id: 'd', text: "(3), (4), dan (5)", isCorrect: false } ]},
+            { id: 24, text: "Pelestarian budaya dapat dilakukan melalui culture experience dan culture knowledge. Berikut yang merupakan contoh pelestarian budaya melalui culture knowledge adalah....", options: [ { id: 'a', text: "memublikasikan artikel mengenai kebudayaan lokal di media sosial", isCorrect: true }, { id: 'b', text: "mengikuti kursus membatik yang diadakan oleh masyarakat setempat", isCorrect: false }, { id: 'c', text: "menjadi perajin yang memproduksi oleh-oleh khas daerah", isCorrect: false }, { id: 'd', text: "berlatih menguasai tarian daerah dengan baik", isCorrect: false } ]},
+            { id: 25, text: "Penyelenggaraan pentas seni dan budaya dalam merayakan hari jadi sebuah kota merupakan contoh pelestarian budaya di lingkungan....", options: [ { id: 'a', text: "masyarakat", isCorrect: true }, { id: 'b', text: "keluarga", isCorrect: false }, { id: 'c', text: "sekolah", isCorrect: false }, { id: 'd', text: "negara", isCorrect: false } ]},
+            { id: 26, text: "Pelestarian kebudayaan Indonesia merupakan suatu keharusan bagi bangsa Indonesia melalui berbagai cara dan upaya. Namun, hal yang utama dan penting bagi pelestarian kebudayaan adalah..", options: [ { id: 'a', text: "menguasai bahasa daerah sebelum mementaskan sebuah pertunjukan", isCorrect: false }, { id: 'b', text: "menanamkan semangat untuk mengadakan festival kebudayaan", isCorrect: false }, { id: 'c', text: "mempersiapkan dana yang cukup untuk melestarikan budaya", isCorrect: false }, { id: 'd', text: "memiliki kesadaran dan rasa cinta terhadap kebudayaan", isCorrect: true } ]},
+            { 
+                id: 27, 
+                text: "Perhatikan gambar berikut.\n\nPengukuhan hal pada gambar sebagai salah satu warisan budaya tak benda oleh UNESCO membawa dampak bagi Indonesia di tingkat internasional, yaitu..", 
+                // UBAH BARIS DI BAWAH INI SESUAI PATH GAMBAR DI REPO GITHUB ANDA
+                // Contoh: image: "gambar_soal_no_27.jpg" ATAU "https://username.github.io/repo/gambar_soal_no_27.jpg"
+                image: "gsno27batik.jpg", 
+                options: [ 
+                    { id: 'a', text: "menumbuhkan rasa bangga masyarakat Indonesia terhadap kebudayaannya", isCorrect: false }, 
+                    { id: 'b', text: "mendatangkan investor asing untuk menanamkan modal di Indonesia", isCorrect: false }, 
+                    { id: 'c', text: "Indonesia mendapat kecaman karena mengakui budaya negara lain", isCorrect: false }, 
+                    { id: 'd', text: "meningkatkan citra positif dan martabat bangsa Indonesia", isCorrect: true } 
+                ]
+            },
+            { id: 28, text: "Bahasa Indonesia merupakan bahasa persatuan bangsa Indonesia. Konsekuensi atas pernyataan tersebut terhadap adanya bahasa daerah adalah", options: [ { id: 'a', text: "munculnya larangan terhadap penggunaan bahasa daerah", isCorrect: false }, { id: 'b', text: "masyarakat tidak lagi menggunakan bahasa daerah untuk berkomunikasi", isCorrect: false }, { id: 'c', text: "bahasa Indonesia sebagai bahasa nasional berkedudukan di atas bahasa-bahasa daerah", isCorrect: true }, { id: 'd', text: "generasi muda kurang menguasai bahasa daerah karena lebih sering menggunakan bahasa Indonesia", isCorrect: false } ]},
+            { id: 29, text: "Identitas bangsa merupakan manifestasi nilai-nilai budaya yang tumbuh dan berkembang dalam berbagai aspek kehidupan suatu bangsa dengan ciri-ciri dan sifat yang khas. Berikut yang tidak termasuk kegunaan identitas bangsa adalah....", options: [ { id: 'a', text: "menciptakan rasa keanggotaan yang sama", isCorrect: false }, { id: 'b', text: "membangun kesatuan sosial sebuah bangsa di suatu negara", isCorrect: false }, { id: 'c', text: "membentuk lingkungan yang didasarkan pada suku bangsa tertentu", isCorrect: true }, { id: 'd', text: "melestarikan kesetiakawanan warga negara terhadap negara bangsa", isCorrect: false } ]},
+            { id: 30, text: "Jati diri bangsa Indonesia adalah nilai-nilai yang merupakan buah pikiran dan gagasan dasar bangsa Indonesia tentang kehidupan yang dianggap baik dan memberikan watak, corak, dan ciri masyarakat Indonesia. Salah satu ciri dan watak bangsa Indonesia adalah....", options: [ { id: 'a', text: "sifat religius", isCorrect: true }, { id: 'b', text: "individualis", isCorrect: false }, { id: 'c', text: "materialis", isCorrect: false }, { id: 'd', text: "rasisme", isCorrect: false } ]},
+            { id: 31, text: "Cara pandang bangsa Indonesia tentang diri dan tanah airnya sebagai negara kepulauan dengan seluruh aspek kehidupannya yang beragam merupakan pengertian dari....", options: [ { id: 'a', text: "sikap cinta tanah air", isCorrect: false }, { id: 'b', text: "wawasan Nusantara", isCorrect: true }, { id: 'c', text: "jati diri bangsa", isCorrect: false }, { id: 'd', text: "patriotisme", isCorrect: false } ]},
+            { id: 32, text: "Aspirasi bangsa yang berkembang di masyarakat serta cita-cita dan tujuan nasional yang ada di dalam Pembukaan UUD NRI Tahun 1945 merupakan salah satu unsur dasar wawasan Nusantara, yaitu....", options: [ { id: 'a', text: "isi", isCorrect: true }, { id: 'b', text: "wadah", isCorrect: false }, { id: 'c', text: "pedoman", isCorrect: false }, { id: 'd', text: "tata laku", isCorrect: false } ]},
+            { id: 33, text: "Perhatikan pernyataan-pernyataan berikut.\n(1) Bertujuan meningkatkan rasa nasionalisme.\n(2) Menghilangkan kepentingan-kepentingan individu.\n(3) Memiliki relevansi dengan masa depan bangsa Indonesia.\n(4) Berfokus pada daerah masing-masing dan mengabaikan kepentingan nasional.\n(5) Pedoman, acuan, dan arahan untuk membangun dan memelihara keutuhan NKRI.\nPernyataan yang tepat mengenai wawasan Nusantara ditunjukkan oleh nomor....", options: [ { id: 'a', text: "(1), (2), dan (3)", isCorrect: false }, { id: 'b', text: "(1), (3), dan (5)", isCorrect: true }, { id: 'c', text: "(2), (3), dan (4)", isCorrect: false }, { id: 'd', text: "(3), (4), dan (5)", isCorrect: false } ]},
+            { id: 34, text: "Berikut yang tidak termasuk fungsi wawasan Nusantara adalah....", options: [ { id: 'a', text: "Menumbuhkan dan mengembangkan kesadaran dan semangat kebangsaan Indonesia.", isCorrect: false }, { id: 'b', text: "Menanamkan dan menumbuhkan rasa cinta tanah air dan rela berkorban untuk negara.", isCorrect: false }, { id: 'c', text: "Membatasi kehidupan bersama yang multikultural dan plural berdasarkan nilai tertentu.", isCorrect: true }, { id: 'd', text: "Mengembangkan keberadaan masyarakat madani sebagai pengembangan kekuasaan pemerintah", isCorrect: false } ]},
+            { id: 35, text: "Wawasan Nusantara dalam kehidupan politik akan membangun iklim penyelenggaraan negara yang.", options: [ { id: 'a', text: "diktatoris", isCorrect: false }, { id: 'b', text: "sehat dan dinamis", isCorrect: true }, { id: 'c', text: "melahirkan politik dinasti", isCorrect: false }, { id: 'd', text: "menimbulkan kesenjangan", isCorrect: false } ]},
+            { id: 36, text: "Menerapkan nilai-nilai wawasan Nusantara dalam kehidupan sehari-hari sangat penting dilakukan oleh generasi muda. Berikut pernyataan yang menunjukkan pentingnya wawasan Nusantara bagi generasi muda adalah...", options: [ { id: 'a', text: "Meningkatkan rasa solidaritas dan persatuan antarsuku bangsa di Indonesia sehingga dapat menjaga keutuhan Negara Indonesia.", isCorrect: true }, { id: 'b', text: "Memberikan petunjuk untuk mengolah dan memanfaatkan kekayaan alam Negara Indonesia demi keuntungan pribadi.", isCorrect: false }, { id: 'c', text: "Melatih kemampuan berpikir kritis sehingga dapat mengkritisi kebijakan yang tidak memihak kepada rakyat.", isCorrect: false }, { id: 'd', text: "Menanamkan nilai-nilai kerohanian sehingga dapat mensyukuri segala nikmat yang diberikan oleh Tuhan Yang Maha Esa.", isCorrect: false } ]},
+            { id: 37, text: "Perhatikan pernyataan-pernyataan berikut.\n(1) Menggunakan produk lokal untuk mendukung perekonomian daerah.\n(2) Menghargai perbedaan budaya dan adat istiadat yang ada di Indonesia.\n(3) Menggunakan media sosial untuk menyebarkan berita yang diragukan kredibilitasnya.\n(4) Memanfaatkan keindahan alam Indonesia untuk dijadikan tempat wisata bersama masyarakat setempat.\n(5) Memilih pergi berlibur ke luar negeri karena banyak tempat wisata di luar negeri yang tidak ditemukan di Indonesia.\nPernyataan yang menunjukkan penerapan wawasan Nusantara yang dilakukan oleh masyarakat Indonesia ditunjukkan oleh nomor....", options: [ { id: 'a', text: "(1), (2), dan (4)", isCorrect: true }, { id: 'b', text: "(1), (3), dan (4)", isCorrect: false }, { id: 'c', text: "(1), (4), dan (5)", isCorrect: false }, { id: 'd', text: "(2), (3), dan (5)", isCorrect: false } ]},
+            { id: 38, text: "Perhatikan ilustrasi berikut.\nDi sudut Kota B, terdapat suatu kawasan yang memiliki pemandangan alam yang sangat indah. Oleh sebab itu, kepala daerah Kota B ingin memanfaatkan kawasan tersebut menjadi kawasan pariwisata. Berdasarkan konsep wawasan Nusantara, langkah tepat yang harus dilakukan oleh kepala daerah Kota B adalah", options: [ { id: 'a', text: "mengembangkan kawasan wisata dengan melibatkan masyarakat lokal", isCorrect: true }, { id: 'b', text: "melakukan pengembangan kawasan wisata dengan mengikuti tren terkini", isCorrect: false }, { id: 'c', text: "mengundang investor asing untuk membangun fasilitas mewah yang dapat menarik para wisatawan asing", isCorrect: false }, { id: 'd', text: "menetapkan harga tiket masuk yang tinggi untuk wisatawan lokal supaya dapat meningkatkan pendapatan daerah", isCorrect: false } ]},
+            { id: 39, text: "Konsep wawasan Nusantara dapat diimplementasikan dalam kehidupan pertahanan dan keamanan negara. Berikut pernyataan yang menunjukkan implementasi konsep wawasan Nusantara dalam strategi pertahanan dan keamanan negara untuk menghadapi ancaman global adalah..", options: [ { id: 'a', text: "menempatkan pasukan militer di setiap daerah untuk mengantisipasi serangan dari luar", isCorrect: false }, { id: 'b', text: "meningkatkan anggaran militer untuk membeli peralatan perang paling modern dari negara lain", isCorrect: false }, { id: 'c', text: "menutup diri dari pengaruh budaya asing dengan membatasi arus globalisasi yang dapat menghilangkan rasa nasionalisme bangsa Indonesia", isCorrect: false }, { id: 'd', text: "memperkuat kerja sama regional dan internasional serta menjaga kedaulatan negara melalui hubungan diplomasi dan pertahanan yang terintegrasi", isCorrect: true } ]},
+            { id: 40, text: "Menumbuhkan semangat wawasan Nusantara dapat dilakukan melalui kegiatan-kegiatan di sekolah. Berikut kegiatan yang dapat menumbuhkan semangat wawasan Nusantara di lingkungan sekolah adalah", options: [ { id: 'a', text: "mengadakan pentas seni yang menampilkan seni dan tradisi dari berbagai daerah di Indonesia", isCorrect: true }, { id: 'b', text: "melakukan kunjungan wisata ke taman rekreasi yang menyediakan wahana ekstrem untuk menghilangkan stres", isCorrect: false }, { id: 'c', text: "menggelar festival budaya Asia yang menampilkan kultur budaya Asia yang sedang digemari oleh generasi muda", isCorrect: false }, { id: 'd', text: "berpartisipasi dalam kegiatan Pekan Olahraga Nasional (PON) dengan menjadi peserta lomba yang mewakili provinsi", isCorrect: false } ]},
+            
+            // Konversi Soal Isian Singkat menjadi Teks Input (Kotak Teks)
+            { id: 41, type: 'short_answer', text: "Kebudayaan yang diakui secara nasional sebagai identitas bangsa disebut budaya...", correctAnswers: ["nasional"] },
+            { id: 42, type: 'short_answer', text: "Membantu tetangga yang kesulitan tanpa membedakan agama adalah wujud sikap...", correctAnswers: ["toleransi"] },
+            { id: 43, type: 'short_answer', text: "Batas wilayah Indonesia sebelah utara berbatasan langsung dengan negara...", correctAnswers: ["malaysia"] },
+            { id: 44, type: 'short_answer', text: "Keputusan yang diambil bersama dalam sebuah musyawarah disebut...", correctAnswers: ["mufakat"] },
+            { id: 45, type: 'short_answer', text: "Orang yang ingin memisahkan diri dari negara Indonesia disebut kelompok...", correctAnswers: ["separatis", "separatisme"] },
+            { id: 46, type: 'short_answer', text: "Nama pakaian adat khas moderen dari daerah kalimantan selatan saat ini adalah...", correctAnswers: ["sasirangan", "kain sasirangan"] },
+            { id: 47, type: 'short_answer', text: "Sila Pancasila yang paling berkaitan dengan persatuan bangsa adalah sila ke...", correctAnswers: ["tiga", "3", "ke-3", "ketiga"] },
+            { id: 48, type: 'short_answer', text: "Kita harus bersikap ... saat menerima informasi dari internet agar tidak tertipu hoaks.", correctAnswers: ["selektif", "waspada", "kritis", "hati-hati", "hati hati"] },
+            { id: 49, type: 'short_answer', text: "Contoh sumber daya alam laut yang paling melimpah di Indonesia adalah...", correctAnswers: ["ikan"] },
+            { id: 50, type: 'short_answer', text: "Alat komunikasi utama yang mempersatukan ribuan suku di Indonesia adalah bahasa...", correctAnswers: ["indonesia", "bahasa indonesia"] }
+        ];
+
+        // ==========================================
+        // FUNGSI UTILITAS
+        // ==========================================
+        const shuffleArray = (array) => {
+            const newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        };
+
+        const formatTime = (seconds) => {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            if(h > 0) return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        };
+
+        // ==========================================
+        // KOMPONEN UTAMA APPS
+        // ==========================================
+        const App = () => {
+            // State Aplikasi
+            const [appState, setAppState] = React.useState('login'); // login, exam, finished
+            const [studentData, setStudentData] = React.useState({ name: '', class: '', date: new Date().toISOString().split('T')[0] });
+            const [examData, setExamData] = React.useState([]);
+            const [currentQuestionIdx, setCurrentQuestionIdx] = React.useState(0);
+            const [timeLeft, setTimeLeft] = React.useState(EXAM_DURATION_MINUTES * 60);
+            const [warnings, setWarnings] = React.useState(0);
+            
+            // State Modals (Anti Flicker Pattern)
+            const [modalConfig, setModalConfig] = React.useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null, onCancel: null });
+            const [resumeConfig, setResumeConfig] = React.useState({ isOpen: false });
+            
+            // State Hasil
+            const [finalScore, setFinalScore] = React.useState(0);
+            const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+            // Inisialisasi: Cek LocalStorage
+            React.useEffect(() => {
+                const savedSession = localStorage.getItem(STORAGE_KEY);
+                if (savedSession && appState === 'login') {
+                    setResumeConfig({ isOpen: true, data: JSON.parse(savedSession) });
+                }
+            }, [appState]);
+
+            // Timer Loop
+            React.useEffect(() => {
+                let timer;
+                if (appState === 'exam' && timeLeft > 0) {
+                    timer = setInterval(() => {
+                        setTimeLeft(prev => {
+                            if (prev <= 1) {
+                                clearInterval(timer);
+                                autoSubmitTimeOut();
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                }
+                return () => clearInterval(timer);
+            }, [appState, timeLeft]);
+
+            // Auto Save ke LocalStorage
+            React.useEffect(() => {
+                if (appState === 'exam') {
+                    const sessionData = { studentData, examData, currentQuestionIdx, timeLeft, warnings };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+                }
+            }, [appState, examData, currentQuestionIdx, timeLeft, warnings, studentData]);
+
+            // Anti Cheat Listeners
+            React.useEffect(() => {
+                if (appState !== 'exam') return;
+
+                const handleVisibilityChange = () => {
+                    if (document.hidden) handleCheatViolation("Berpindah Tab/Aplikasi");
+                };
+
+                const handleFullscreenChange = () => {
+                    if (!document.fullscreenElement) handleCheatViolation("Keluar dari Mode Fullscreen");
+                };
+
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+                return () => {
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+                };
+            }, [appState, warnings, examData]);
+
+            const handleCheatViolation = (reason) => {
+                const currentWarnings = warnings + 1;
+                setWarnings(currentWarnings);
+                
+                if (currentWarnings === 1) {
+                    showModal('warning', 'PERINGATAN PELANGGARAN!', `Sistem mendeteksi Anda: ${reason}. Ini adalah peringatan pertama. Jika diulangi, ujian akan otomatis dihentikan dan nilai dikirim apa adanya.`, () => {
+                        requestFullscreen();
+                        closeModal();
+                    });
+                } else if (currentWarnings >= 2) {
+                    showModal('error', 'UJIAN DIHENTIKAN!', `Anda telah melanggar aturan lebih dari 1 kali (${reason}). Ujian otomatis diakhiri.`, () => {
+                        closeModal();
+                        submitExam(true, "Dihentikan Paksa (Curang)");
+                    });
+                }
+            };
+
+            const requestFullscreen = () => {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) elem.requestFullscreen().catch(e => console.log(e));
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(e => console.log(e));
+            };
+
+            const showModal = (type, title, message, onConfirm, onCancel = null) => {
+                setModalConfig({ isOpen: true, type, title, message, onConfirm, onCancel });
+            };
+            const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
+
+            // Actions
+            const startNewExam = (e) => {
+                if(e) e.preventDefault();
+                
+                // Shuffle Soal dan Opsi
+                const shuffledQuestions = shuffleArray(RAW_QUESTIONS).map(q => {
+                    if (q.type === 'short_answer') {
+                        return { ...q, textAnswer: '' };
+                    }
+                    return {
+                        ...q,
+                        options: shuffleArray(q.options),
+                        selectedOptionId: null
+                    };
+                });
+
+                setExamData(shuffledQuestions);
+                setTimeLeft(EXAM_DURATION_MINUTES * 60);
+                setCurrentQuestionIdx(0);
+                setWarnings(0);
+                setAppState('exam');
+                requestFullscreen();
+            };
+
+            const resumeExam = (savedData) => {
+                setStudentData(savedData.studentData);
+                setExamData(savedData.examData);
+                setCurrentQuestionIdx(savedData.currentQuestionIdx);
+                setTimeLeft(savedData.timeLeft);
+                setWarnings(savedData.warnings);
+                setResumeConfig({ isOpen: false });
+                setAppState('exam');
+                requestFullscreen();
+            };
+
+            const handleOptionSelect = (optionId) => {
+                const newData = [...examData];
+                newData[currentQuestionIdx].selectedOptionId = optionId;
+                setExamData(newData);
+            };
+
+            const handleTextAnswerChange = (text) => {
+                const newData = [...examData];
+                newData[currentQuestionIdx].textAnswer = text;
+                setExamData(newData);
+            };
+
+            const isQuestionAnswered = (q) => {
+                if (q.type === 'short_answer') return q.textAnswer && q.textAnswer.trim().length > 0;
+                return q.selectedOptionId !== null;
+            };
+
+            const autoSubmitTimeOut = () => {
+                showModal('info', 'Waktu Habis!', 'Waktu pengerjaan ujian telah habis. Jawaban Anda akan dikumpulkan otomatis.', () => {
+                    closeModal();
+                    submitExam(true, "Waktu Habis");
+                });
+            };
+
+            const requestSubmit = () => {
+                const unAnswered = examData.filter(q => !isQuestionAnswered(q)).length;
+                let msg = "Apakah Anda yakin ingin menyelesaikan ujian dan mengirimkan jawaban?";
+                if (unAnswered > 0) {
+                    msg = `PERHATIAN: Ada ${unAnswered} soal yang belum dijawab! ` + msg;
+                }
+                
+                showModal('confirm', 'Konfirmasi Selesai', msg, 
+                    () => { closeModal(); submitExam(false, "Selesai Normal"); },
+                    () => closeModal()
+                );
+            };
+
+            const submitExam = (isAuto = false, notes = "") => {
+                setIsSubmitting(true);
+                
+                // Hitung Skor (Skala 0 - 100)
+                let correctCount = 0;
+                examData.forEach(q => {
+                    if (q.type === 'short_answer') {
+                        const userAns = (q.textAnswer || '').trim().toLowerCase();
+                        const isCorrect = q.correctAnswers.some(ans => userAns === ans.toLowerCase());
+                        if (isCorrect) correctCount++;
+                    } else {
+                        const correctOption = q.options.find(opt => opt.isCorrect);
+                        if (q.selectedOptionId === correctOption.id) {
+                            correctCount++;
+                        }
+                    }
+                });
+                
+                const calculatedScore = Math.round((correctCount / examData.length) * 100);
+                setFinalScore(calculatedScore);
+
+                // Payload
+                const payload = {
+                    timestamp: new Date().toISOString(),
+                    nama: studentData.name,
+                    kelas: studentData.class,
+                    tanggal: studentData.date,
+                    skor: calculatedScore,
+                    pelanggaran: warnings,
+                    keterangan: notes,
+                    debug: JSON.stringify({benar: correctCount, total: examData.length})
+                };
+
+                // Fetch ke Google Sheets
+                fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    setIsSubmitting(false);
+                    setAppState('finished');
+                    if (document.exitFullscreen) document.exitFullscreen().catch(e => console.log(e));
+                }).catch(err => {
+                    console.error("Gagal mengirim:", err);
+                    localStorage.removeItem(STORAGE_KEY);
+                    setIsSubmitting(false);
+                    setAppState('finished');
+                    if (document.exitFullscreen) document.exitFullscreen().catch(e => console.log(e));
+                });
+            };
+
+            // ==========================================
+            // RENDERERS
+            // ==========================================
+            
+            // Custom Modal Renderer (Anti-Flicker)
+            const renderModal = () => {
+                if (!modalConfig.isOpen) return null;
+                return (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 border-t-4 border-blue-600">
+                            <h3 className={`text-xl font-bold mb-3 ${modalConfig.type === 'error' || modalConfig.type === 'warning' ? 'text-red-600' : 'text-slate-800'}`}>
+                                {modalConfig.title}
+                            </h3>
+                            <p className="text-slate-600 mb-6">{modalConfig.message}</p>
+                            <div className="flex justify-end gap-3">
+                                {modalConfig.onCancel && (
+                                    <button onClick={modalConfig.onCancel} className="px-4 py-2 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
+                                        Batal
+                                    </button>
+                                )}
+                                <button onClick={modalConfig.onConfirm} className={`px-4 py-2 rounded-lg font-medium text-white transition-colors ${modalConfig.type === 'warning' || modalConfig.type === 'error' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                    {modalConfig.type === 'confirm' ? 'Ya, Kumpulkan' : 'Mengerti'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderResumeModal = () => {
+                if (!resumeConfig.isOpen) return null;
+                return (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 border-t-4 border-yellow-500">
+                            <h3 className="text-xl font-bold mb-3 text-slate-800">Sesi Ujian Ditemukan!</h3>
+                            <p className="text-slate-600 mb-2">Terdapat sesi ujian yang belum selesai atas nama <b>{resumeConfig.data?.studentData?.name}</b>.</p>
+                            <p className="text-sm text-slate-500 mb-6">Sisa Waktu: {formatTime(resumeConfig.data?.timeLeft)}</p>
+                            <div className="flex flex-col gap-3">
+                                <button onClick={() => resumeExam(resumeConfig.data)} className="w-full px-4 py-3 rounded-lg font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                                    Lanjutkan Ujian
+                                </button>
+                                <button onClick={() => {
+                                    localStorage.removeItem(STORAGE_KEY);
+                                    setResumeConfig({ isOpen: false });
+                                }} className="w-full px-4 py-2 rounded-lg font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+                                    Hapus & Mulai Baru
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            if (appState === 'login') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        {renderResumeModal()}
+                        <div className="glass-panel w-full max-w-md p-8 rounded-2xl">
+                            <div className="text-center mb-8">
+                                <div className="bg-blue-100 text-blue-700 p-3 rounded-full inline-block mb-3">
+                                    <i data-lucide="graduation-cap" className="w-8 h-8"></i>
+                                </div>
+                                <h1 className="text-2xl font-bold text-slate-800">Portal Ujian CBT</h1>
+                                <p className="text-slate-500">{EXAM_SUBJECT} - KELAS {EXAM_CLASS}</p>
+                            </div>
+                            
+                            <form onSubmit={startNewExam} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
+                                    <input required type="text" value={studentData.name} onChange={e => setStudentData({...studentData, name: e.target.value})} className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Masukkan nama lengkap..." />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Kelas</label>
+                                    <input required type="text" value={studentData.class} onChange={e => setStudentData({...studentData, class: e.target.value})} className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Contoh: 8A" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Ujian</label>
+                                    <input required type="date" value={studentData.date} onChange={e => setStudentData({...studentData, date: e.target.value})} className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                                </div>
+                                <div className="pt-4">
+                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-all active:scale-95">
+                                        Mulai Ujian <i data-lucide="play-circle" className="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                <p className="text-xs text-center text-slate-400 mt-4">
+                                    Sistem Anti-Kecurangan Aktif. Dilarang berpindah tab atau keluar dari layar penuh saat ujian berlangsung.
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (appState === 'exam') {
+                const currentQ = examData[currentQuestionIdx];
+                const answeredCount = examData.filter(q => isQuestionAnswered(q)).length;
+
+                return (
+                    <div className="min-h-screen flex flex-col h-screen overflow-hidden bg-slate-50 relative">
+                        {renderModal()}
+                        
+                        {/* HEADER */}
+                        <header className="bg-white shadow-sm border-b border-slate-200 p-4 flex justify-between items-center z-10">
+                            <div>
+                                <h1 className="font-bold text-slate-800 md:text-lg">{EXAM_SUBJECT}</h1>
+                                <p className="text-xs text-slate-500">{studentData.name} - Kelas {studentData.class}</p>
+                            </div>
+                            <div className="flex gap-4 items-center">
+                                {warnings > 0 && (
+                                    <div className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 animate-pulse">
+                                        <i data-lucide="alert-triangle" className="w-4 h-4"></i> Pelanggaran: {warnings}/2
+                                    </div>
+                                )}
+                                <div className={`font-mono text-xl font-bold flex items-center gap-2 px-4 py-2 rounded-lg ${timeLeft < 300 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-100 text-slate-700'}`}>
+                                    <i data-lucide="clock" className="w-5 h-5"></i>
+                                    {formatTime(timeLeft)}
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* MAIN CONTENT AREA */}
+                        <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+                            
+                            {/* Area Soal (Kiri) */}
+                            <div className="flex-1 p-4 md:p-8 overflow-y-auto pb-32 md:pb-8">
+                                <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                    <div className="flex items-start gap-4 mb-6">
+                                        <div className="bg-blue-600 text-white w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg shrink-0">
+                                            {currentQuestionIdx + 1}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-slate-800 text-lg leading-relaxed whitespace-pre-line">{currentQ.text}</p>
+                                            
+                                            {/* Render Image jika ada */}
+                                            {currentQ.image && (
+                                                <div className="mt-4 mb-6 rounded-lg overflow-hidden border border-slate-200 max-w-md">
+                                                    <img 
+                                                        src={currentQ.image} 
+                                                        alt="Ilustrasi Soal" 
+                                                        className="w-full h-auto object-cover max-h-72" 
+                                                        onError={(e) => {
+                                                            e.target.onerror = null; 
+                                                            e.target.src = "https://via.placeholder.com/600x400?text=Gambar+Tidak+Ditemukan.+Harap+Periksa+Path/URL.";
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {currentQ.type === 'short_answer' ? (
+                                        <div className="pl-0 md:pl-14">
+                                            <input 
+                                                type="text" 
+                                                value={currentQ.textAnswer || ''} 
+                                                onChange={(e) => handleTextAnswerChange(e.target.value)}
+                                                placeholder="Ketik jawaban Anda di sini..."
+                                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg text-slate-800"
+                                                autoComplete="off"
+                                            />
+                                            <p className="text-sm text-slate-500 mt-2 flex items-center gap-1">
+                                                <i data-lucide="info" className="w-4 h-4"></i> Ketikkan jawaban dengan singkat dan jelas (contoh: "nasional", "malaysia", dll).
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3 pl-0 md:pl-14">
+                                            {currentQ.options.map((opt, idx) => {
+                                                const labels = ['A', 'B', 'C', 'D'];
+                                                const isSelected = currentQ.selectedOptionId === opt.id;
+                                                return (
+                                                    <div 
+                                                        key={opt.id}
+                                                        onClick={() => handleOptionSelect(opt.id)}
+                                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}
+                                                    >
+                                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${isSelected ? 'border-blue-500 bg-blue-500 text-white' : 'border-slate-300 text-slate-500'}`}>
+                                                            {labels[idx]}
+                                                        </div>
+                                                        <span className={`text-base ${isSelected ? 'text-blue-900 font-medium' : 'text-slate-700'}`}>{opt.text}</span>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Area Navigasi Grid (Kanan) */}
+                            <div className="w-full md:w-80 bg-white border-l border-slate-200 p-4 overflow-y-auto flex-shrink-0 border-t md:border-t-0 max-h-64 md:max-h-full">
+                                <div className="mb-4 flex justify-between items-center">
+                                    <h3 className="font-bold text-slate-700">Navigasi Soal</h3>
+                                    <span className="text-xs font-medium text-slate-500">{answeredCount} / {examData.length} Dijawab</span>
+                                </div>
+                                <div className="grid grid-cols-5 md:grid-cols-4 gap-2">
+                                    {examData.map((q, i) => {
+                                        const isCurrent = i === currentQuestionIdx;
+                                        const isAnswered = isQuestionAnswered(q);
+                                        let bgClass = "bg-white border-slate-200 text-slate-600 hover:bg-slate-100";
+                                        if (isCurrent) bgClass = "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/30";
+                                        else if (isAnswered) bgClass = "bg-green-500 border-green-500 text-white";
+
+                                        return (
+                                            <button 
+                                                key={i}
+                                                onClick={() => setCurrentQuestionIdx(i)}
+                                                className={`h-10 rounded border font-medium transition-colors ${bgClass}`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </main>
+
+                        {/* FOOTER ACTIONS */}
+                        <footer className="bg-white border-t border-slate-200 p-4 z-10 absolute bottom-0 md:static w-full">
+                            <div className="max-w-6xl mx-auto flex justify-between items-center gap-2">
+                                <button 
+                                    onClick={() => setCurrentQuestionIdx(prev => Math.max(0, prev - 1))}
+                                    disabled={currentQuestionIdx === 0}
+                                    className="px-4 md:px-6 py-2.5 rounded-lg font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <i data-lucide="chevron-left" className="w-5 h-5"></i> <span className="hidden md:inline">Sebelumnya</span>
+                                </button>
+                                
+                                {currentQuestionIdx === examData.length - 1 ? (
+                                    <button 
+                                        onClick={requestSubmit}
+                                        className="px-6 py-2.5 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/30 flex items-center gap-2"
+                                    >
+                                        <i data-lucide="check-circle" className="w-5 h-5"></i> Selesai & Kumpul
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => setCurrentQuestionIdx(prev => Math.min(examData.length - 1, prev + 1))}
+                                        className="px-4 md:px-6 py-2.5 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 flex items-center gap-2"
+                                    >
+                                        <span className="hidden md:inline">Selanjutnya</span> <i data-lucide="chevron-right" className="w-5 h-5"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </footer>
+
+                        {/* Fullscreen Overlay for Submitting state */}
+                        {isSubmitting && (
+                            <div className="fixed inset-0 z-[9999] bg-white/90 backdrop-blur flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                                <h2 className="text-xl font-bold text-slate-800">Mengirim Jawaban...</h2>
+                                <p className="text-slate-500 mt-2">Mohon tunggu, jangan tutup halaman ini.</p>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            if (appState === 'finished') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="glass-panel w-full max-w-md p-8 rounded-2xl text-center">
+                            <div className="bg-green-100 text-green-600 p-4 rounded-full inline-flex mb-6 animate-bounce">
+                                <i data-lucide="check-circle" className="w-12 h-12"></i>
+                            </div>
+                            <h1 className="text-2xl font-bold text-slate-800 mb-2">Ujian Selesai!</h1>
+                            <p className="text-slate-600 mb-8">Terima kasih <b>{studentData.name}</b>. Jawaban Anda telah berhasil dikirim ke server.</p>
+                            
+                            <div className="bg-slate-50 rounded-xl p-6 mb-8 border border-slate-200">
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Skor Anda</p>
+                                <p className="text-6xl font-black text-blue-600">{finalScore}</p>
+                            </div>
+
+                            <button onClick={() => window.location.reload()} className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-lg transition-all">
+                                Kembali ke Beranda
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return null;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Inisialisasi ikon Lucide setelah render
+        setTimeout(() => lucide.createIcons(), 500);
+    </script>
+</body>
+</html>
